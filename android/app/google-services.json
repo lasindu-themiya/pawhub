@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "564179883742",
+    "project_id": "pawhub-678c4",
+    "storage_bucket": "pawhub-678c4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:564179883742:android:a481c353bf5f831a1bd44f",
+        "android_client_info": {
+          "package_name": "com.example.pawhub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_9M5PPQSv9t9Q8qCEvWOA1Qaf02nTeqA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
