@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'config/firebase_options.dart';
 import 'utils/notification_helper.dart';
-import 'package:pawhub/screens/home_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +28,23 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PAW HUB',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        fontFamily: 'Poppins',
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color.fromARGB(255, 97, 204, 236),
+          elevation: 0,
+          centerTitle: true,
+          titleTextStyle: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Colors.white,
+            letterSpacing: 2,
+          ),
+        ),
+      ),
       home: const HomeScreen(),
       debugShowCheckedModeBanner: false,
     );

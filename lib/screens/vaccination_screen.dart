@@ -192,6 +192,7 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                                   .map((v) => Column(
                                         children: [
                                           _buildVaccinationItem(
+                                            id: v['id'],
                                             type: v['type'],
                                             date: (v['date'] as Timestamp).toDate(),
                                             nextDate: (v['nextDate'] as Timestamp).toDate(),
@@ -266,6 +267,7 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
   }
 
   Widget _buildVaccinationItem({
+    required String id,
     required String type,
     required DateTime date,
     required DateTime nextDate,
@@ -321,6 +323,25 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                 ),
               ],
             ),
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'edit') {
+                _showEditVaccinationDialog(
+                  context,
+                  id: id,
+                  type: type,
+                  date: date,
+                  duration: duration,
+                );
+              } else if (value == 'delete') {
+                _showDeleteConfirmation(context, id);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'edit', child: Text('Edit')),
+              const PopupMenuItem(value: 'delete', child: Text('Delete')),
+            ],
           ),
         ],
       ),
@@ -394,6 +415,103 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                 }
               },
               child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, String docId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Vaccination'),
+        content: const Text('Are you sure you want to delete this vaccination record?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await FirestoreService.deleteVaccination(docId);
+              Navigator.pop(context);
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditVaccinationDialog(
+    BuildContext context, {
+    required String id,
+    required String type,
+    required DateTime date,
+    required int duration,
+  }) {
+    final _typeController = TextEditingController(text: type);
+    DateTime _selectedDate = date;
+    final _durationController = TextEditingController(text: duration.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Vaccination'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _typeController,
+                  decoration: const InputDecoration(labelText: 'Vaccine Type'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _durationController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Duration (months)'),
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _selectedDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      _selectedDate = picked;
+                    }
+                  },
+                  child: const Text('Select Vaccination Date'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (_typeController.text.isNotEmpty &&
+                    _durationController.text.isNotEmpty) {
+                  await FirestoreService.updateVaccination(
+                    docId: id,
+                    type: _typeController.text,
+                    date: _selectedDate,
+                    duration: int.parse(_durationController.text),
+                  );
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Update'),
             ),
           ],
         );
