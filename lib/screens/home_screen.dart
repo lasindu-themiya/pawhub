@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF4ADE80), Color(0xFF22C55E)],
+                colors: [Color.fromARGB(255, 53, 161, 180), Color.fromARGB(255, 88, 163, 212)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

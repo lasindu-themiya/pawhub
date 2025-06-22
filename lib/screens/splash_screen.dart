@@ -224,7 +224,7 @@ class FeatureItem extends StatelessWidget {
             width: 8,
             height: 8,
             decoration: const BoxDecoration(
-              color: Color(0xFF4ADE80),
+              color: Color.fromARGB(255, 91, 195, 226),
               shape: BoxShape.circle,
             ),
           ),

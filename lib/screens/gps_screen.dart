@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../services/location_service.dart';
 import '../services/firestore_service.dart';
 import '../models/geofence_model.dart';
@@ -19,51 +20,102 @@ class _GpsScreenState extends State<GpsScreen> {
   double _radius = 100;
   bool _loading = true;
   bool _saving = false;
-  bool _dogOutNotified = false;
   String? _locationError;
+  bool _geofenceLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    _initLocation();
+    _loadGeofenceOrLocation();
   }
 
-  Future<void> _initLocation() async {
-  if (!mounted) return;
-  setState(() {
-    _loading = true;
-    _locationError = null;
-  });
-  try {
-    final position = await LocationService.getCurrentPosition();
-    if (!mounted) return;
+  Future<void> _loadGeofenceOrLocation() async {
     setState(() {
-      _center = LatLng(position.latitude, position.longitude);
-      _loading = false;
+      _loading = true;
+      _locationError = null;
     });
-  } catch (e) {
-    if (!mounted) return;
-    setState(() {
-      _loading = false;
-      _locationError = e.toString();
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.toString().toLowerCase().contains('location services are disabled')
-                ? 'Location is turned off. Please enable location services.'
-                : 'Error getting location: $e',
-            ),
-            backgroundColor: Colors.redAccent,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+    try {
+      final geofence = await FirestoreService.fetchGeofence();
+      if (geofence != null) {
+        setState(() {
+          _center = LatLng(geofence.latitude, geofence.longitude);
+          _radius = geofence.radius;
+          _loading = false;
+          _geofenceLoaded = true;
+        });
+      } else {
+        await _initLocationForNewGeofence();
       }
-    });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _locationError = e.toString();
+      });
+    }
   }
-}
+
+  Future<void> _initLocationForNewGeofence() async {
+    // Request location permission
+    final status = await Permission.location.request();
+    if (!status.isGranted) {
+      setState(() {
+        _loading = false;
+        _locationError = "Location permission denied. Please enable it in settings.";
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permission denied. Please enable it in settings.'),
+              backgroundColor: Colors.redAccent,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+      });
+      return;
+    }
+
+    try {
+      final position = await LocationService.getCurrentPosition();
+      if (!mounted) return;
+      setState(() {
+        _center = LatLng(position.latitude, position.longitude);
+        _radius = 100;
+        _loading = false;
+        _geofenceLoaded = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _locationError = e.toString();
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                e.toString().toLowerCase().contains('location services are disabled')
+                    ? 'Location is turned off. Please enable location services.'
+                    : 'Error getting location: $e',
+              ),
+              backgroundColor: Colors.redAccent,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      });
+    }
+  }
+
+  Future<void> _addNewGeofence() async {
+    setState(() {
+      _loading = true;
+      _locationError = null;
+    });
+    await _initLocationForNewGeofence();
+  }
 
   void _checkDogInGeofenceWithNotification(LatLng? dogLocation) {
     if (_center == null || dogLocation == null) return;
@@ -94,7 +146,10 @@ class _GpsScreenState extends State<GpsScreen> {
       radius: _radius,
     );
     await FirestoreService.saveGeofence(geofence);
-    setState(() => _saving = false);
+    setState(() {
+      _saving = false;
+      _geofenceLoaded = true;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Geofence saved!')),
     );
@@ -111,7 +166,7 @@ class _GpsScreenState extends State<GpsScreen> {
     if (_center == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text("Dog Location & Geofence"),
+          title: const Text("Location & Geofence"),
           backgroundColor: Colors.blue[700],
           centerTitle: true,
         ),
@@ -123,14 +178,14 @@ class _GpsScreenState extends State<GpsScreen> {
               const SizedBox(height: 16),
               Text(
                 _locationError?.toLowerCase().contains('location services are disabled') == true
-                  ? "Location is turned off.\nPlease enable location services and try again."
-                  : "Failed to get location.",
+                    ? "Location is turned off.\nPlease enable location services and try again."
+                    : _locationError ?? "Failed to get location.",
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 18, color: Colors.black54),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: _initLocation,
+                onPressed: _loadGeofenceOrLocation,
                 icon: const Icon(Icons.refresh),
                 label: const Text("Retry"),
                 style: ElevatedButton.styleFrom(
@@ -146,9 +201,21 @@ class _GpsScreenState extends State<GpsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Dog Location & Geofence"),
+        title: const Text("Location & Geofence"),
         backgroundColor: Colors.blue[700],
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Reload Geofence',
+            onPressed: _loadGeofenceOrLocation,
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_location_alt),
+            tooltip: 'Add New Geofence',
+            onPressed: _addNewGeofence,
+          ),
+        ],
       ),
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance

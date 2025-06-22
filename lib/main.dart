@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'config/firebase_options.dart';
@@ -33,7 +32,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Poppins',
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color.fromARGB(255, 97, 204, 236),
+          backgroundColor: Colors.blue,
           elevation: 0,
           centerTitle: true,
           titleTextStyle: TextStyle(

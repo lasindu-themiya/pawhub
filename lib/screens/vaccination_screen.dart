@@ -47,7 +47,7 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                 Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFF4ADE80), Color(0xFF22C55E)],
+                      colors: [Color.fromARGB(255, 183, 111, 216), Color.fromARGB(255, 203, 125, 223)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
