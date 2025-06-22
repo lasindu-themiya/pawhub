@@ -13,12 +13,33 @@ class TemperatureScreen extends StatefulWidget {
 class _TemperatureScreenState extends State<TemperatureScreen> {
   bool _notifiedHigh = false;
   bool _notifiedLow = false;
+  bool _notifiedDanger = false;
 
   void _checkAndNotify(double temp) {
     final status = _getTemperatureStatus(temp);
-    if (status['status'] == 'High' && !_notifiedHigh) {
+    if (status['status'] == 'Dangerously High' && !_notifiedDanger) {
+      _notifiedDanger = true;
+      _notifiedHigh = false;
+      _notifiedLow = false;
+      NotificationHelper.showDogOutNotification(
+        title: 'Dangerously High Temperature!',
+        body: '🚨 Your dog\'s temperature is dangerously high: $temp°C',
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('🚨 Dangerously high temperature: $temp°C'),
+              backgroundColor: Colors.deepOrange,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      });
+    } else if (status['status'] == 'High' && !_notifiedHigh) {
       _notifiedHigh = true;
       _notifiedLow = false;
+      _notifiedDanger = false;
       NotificationHelper.showDogOutNotification(
         title: 'High Temperature Alert',
         body: '⚠️ Your dog\'s temperature is high: $temp°C',
@@ -37,6 +58,7 @@ class _TemperatureScreenState extends State<TemperatureScreen> {
     } else if (status['status'] == 'Low' && !_notifiedLow) {
       _notifiedLow = true;
       _notifiedHigh = false;
+      _notifiedDanger = false;
       NotificationHelper.showDogOutNotification(
         title: 'Low Temperature Alert',
         body: '⚠️ Your dog\'s temperature is low: $temp°C',
@@ -55,6 +77,7 @@ class _TemperatureScreenState extends State<TemperatureScreen> {
     } else if (status['status'] == 'Normal') {
       _notifiedHigh = false;
       _notifiedLow = false;
+      _notifiedDanger = false;
     }
   }
 
@@ -195,11 +218,11 @@ class _TemperatureScreenState extends State<TemperatureScreen> {
   }
 
   Map<String, dynamic> _getTemperatureStatus(double temp) {
-    if (temp < 37.2) {
+    if (temp > 41.1) {
       return {
-        'status': 'Low',
-        'color': const Color(0xFF3B82F6),
-        'icon': Icons.trending_down,
+        'status': 'Dangerously High',
+        'color': const Color.fromARGB(255, 109, 2, 2),
+        'icon': Icons.warning_amber_rounded,
       };
     }
     if (temp > 39.4) {
@@ -209,11 +232,11 @@ class _TemperatureScreenState extends State<TemperatureScreen> {
         'icon': Icons.trending_up,
       };
     }
-    if (temp > 41.1) {
+    if (temp < 37.2) {
       return {
-        'status': 'Dangerously High',
-        'color': const Color.fromARGB(255, 109, 2, 2),
-        'icon': Icons.trending_up,
+        'status': 'Low',
+        'color': const Color(0xFF3B82F6),
+        'icon': Icons.trending_down,
       };
     }
     return {
