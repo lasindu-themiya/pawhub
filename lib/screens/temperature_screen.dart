@@ -195,17 +195,24 @@ class _TemperatureScreenState extends State<TemperatureScreen> {
   }
 
   Map<String, dynamic> _getTemperatureStatus(double temp) {
-    if (temp < 37.5) {
+    if (temp < 37.2) {
       return {
         'status': 'Low',
         'color': const Color(0xFF3B82F6),
         'icon': Icons.trending_down,
       };
     }
-    if (temp > 39.0) {
+    if (temp > 39.4) {
       return {
         'status': 'High',
         'color': const Color(0xFFEF4444),
+        'icon': Icons.trending_up,
+      };
+    }
+    if (temp > 41.1) {
+      return {
+        'status': 'Dangerously High',
+        'color': const Color.fromARGB(255, 109, 2, 2),
         'icon': Icons.trending_up,
       };
     }
