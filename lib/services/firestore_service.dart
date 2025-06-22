@@ -82,4 +82,35 @@ class FirestoreService {
       'nextDate': Timestamp.fromDate(nextDate),
     });
   }
+
+  // ...existing code...
+
+  static Future<void> deleteVaccination(String docId) async {
+    await _db
+        .collection('vaccinations')
+        .doc('dog')
+        .collection('records')
+        .doc(docId)
+        .delete();
+  }
+
+  static Future<void> updateVaccination({
+    required String docId,
+    required String type,
+    required DateTime date,
+    required int duration,
+  }) async {
+    final nextDate = DateTime(date.year, date.month + duration, date.day);
+    await _db
+        .collection('vaccinations')
+        .doc('dog')
+        .collection('records')
+        .doc(docId)
+        .update({
+      'type': type,
+      'date': Timestamp.fromDate(date),
+      'duration': duration,
+      'nextDate': Timestamp.fromDate(nextDate),
+    });
+  }
 }
