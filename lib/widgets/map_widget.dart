@@ -5,8 +5,14 @@ import 'package:latlong2/latlong.dart';
 class MapWidget extends StatelessWidget {
   final LatLng center;
   final double radius;
+  final LatLng? dogLocation;
 
-  const MapWidget({super.key, required this.center, required this.radius});
+  const MapWidget({
+    super.key,
+    required this.center,
+    required this.radius,
+    this.dogLocation,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,12 +28,21 @@ class MapWidget extends StatelessWidget {
         ),
         MarkerLayer(
           markers: [
+            // Geofence center marker (optional, can remove if not needed)
             Marker(
               point: center,
               width: 30,
               height: 30,
-              child: const Icon(Icons.location_on, color: Colors.red, size: 30),
+              child: const Icon(Icons.location_on, color: Colors.blue, size: 30),
             ),
+            // Dog location marker
+            if (dogLocation != null)
+              Marker(
+                point: dogLocation!,
+                width: 40,
+                height: 40,
+                child: const Icon(Icons.pets, color: Colors.brown, size: 36),
+              ),
           ],
         ),
         CircleLayer(
@@ -36,7 +51,7 @@ class MapWidget extends StatelessWidget {
               point: center,
               radius: radius,
               useRadiusInMeter: true,
-              color: Colors.blue.withOpacity(0.3),
+              color: Colors.blue.withOpacity(0.2),
               borderColor: Colors.blue,
               borderStrokeWidth: 2,
             ),
