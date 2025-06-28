@@ -37,204 +37,206 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      body: Stack(
+        children: [
+          // Paw print background
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.07,
+              child: Image.asset(
+                'assets/images/paw.png',
+                repeat: ImageRepeat.repeat,
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const SizedBox(height: 80),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
+          // Main content
+          Center(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Glowing effect behind dog image
+                  Container(
+                    width: 170,
+                    height: 170,
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFB5A8F8).withOpacity(0.5),
+                            blurRadius: 60,
+                            spreadRadius: 10,
                           ),
-                          child: ClipOval(
-                            child: Image.asset(
-                              'assets/images/dogimage.png', // Updated image path
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
+                        ],
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(32),
+                          border: Border.all(
+                            color: const Color(0xFFB5A8F8),
+                            width: 4,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.purple.withOpacity(0.12),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
                             ),
-                          ),
+                          ],
                         ),
-                        Positioned(
-                          top: -5,
-                          right: -5,
-                          child: ScaleTransition(
-                            scale: Tween<double>(begin: 1.0, end: 1.2)
-                                .animate(_heartController),
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.25),
-                                    offset: const Offset(0, 2),
-                                    blurRadius: 3.84,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.favorite,
-                                size: 24,
-                                color: Color(0xFFFF6B6B),
+                        padding: const EdgeInsets.all(16),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: Image.asset(
+                                'assets/images/pawhub.png',
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
                               ),
                             ),
-                          ),
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: ScaleTransition(
+                                scale: Tween<double>(begin: 1.0, end: 1.2)
+                                    .animate(_heartController),
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.pink.withOpacity(0.18),
+                                        offset: const Offset(0, 2),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.favorite,
+                                    size: 22,
+                                    color: Color(0xFFFF6B6B),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                      .animate()
+                      .scale(
+                        duration: const Duration(milliseconds: 800),
+                        curve: Curves.elasticOut,
+                      )
+                      .fadeIn(duration: const Duration(milliseconds: 800)),
+                  const SizedBox(height: 32),
+                  // App name
+                  Text(
+                    'Paw Hub',
+                    style: TextStyle(
+                      fontFamily: 'Pacifico',
+                      fontSize: 44,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF764BA2),
+                      letterSpacing: 2,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 8,
+                          color: Colors.purple.withOpacity(0.18),
+                          offset: const Offset(0, 4),
                         ),
                       ],
+                    ),
+                  )
+                      .animate()
+                      .moveY(
+                        begin: 50,
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                      )
+                      .fadeIn(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 300),
+                      ),
+                  const SizedBox(height: 12),
+                  // Tagline
+                  const Text(
+                    '24hr location tracking, health updates,\nand on-time vaccinations!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Color(0xFF6D6D6D),
+                      fontWeight: FontWeight.w500,
+                      height: 1.5,
+                    ),
+                  )
+                      .animate()
+                      .moveY(
+                        begin: 30,
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 600),
+                        curve: Curves.easeOut,
+                      )
+                      .fadeIn(
+                        duration: const Duration(milliseconds: 600),
+                        delay: const Duration(milliseconds: 600),
+                      ),
+                  const SizedBox(height: 40),
+                  // Get Started Button (no icon)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: ElevatedButton(
+                      onPressed: _handleGetStarted,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 20, horizontal: 36),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 10,
+                        backgroundColor: const Color(0xFF764BA2),
+                        shadowColor: Colors.purple.withOpacity(0.25),
+                      ),
+                      child: const Text(
+                        'Get Started',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1,
+                        ),
+                      ),
                     )
                         .animate()
                         .scale(
-                          duration: const Duration(milliseconds: 800),
+                          duration: const Duration(milliseconds: 500),
+                          delay: const Duration(milliseconds: 900),
                           curve: Curves.elasticOut,
                         )
-                        .fadeIn(duration: const Duration(milliseconds: 800)),
-                    const SizedBox(height: 40),
-                    const Text(
-                      'We provide',
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    )
-                        .animate()
-                        .moveY(
-                          begin: 50,
-                          duration: const Duration(milliseconds: 600),
-                          delay: const Duration(milliseconds: 300),
-                          curve: Curves.easeOut,
-                        )
                         .fadeIn(
-                          duration: const Duration(milliseconds: 600),
-                          delay: const Duration(milliseconds: 300),
+                          duration: const Duration(milliseconds: 500),
+                          delay: const Duration(milliseconds: 900),
                         ),
-                    const SizedBox(height: 15),
-                    const Text(
-                      '24hr location tracking & health\nupdates\nOn time feeding',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Color(0xE6FFFFFF),
-                        height: 1.5,
-                      ),
-                    )
-                        .animate()
-                        .moveY(
-                          begin: 30,
-                          duration: const Duration(milliseconds: 600),
-                          delay: const Duration(milliseconds: 600),
-                          curve: Curves.easeOut,
-                        )
-                        .fadeIn(
-                          duration: const Duration(milliseconds: 600),
-                          delay: const Duration(milliseconds: 600),
-                        ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 30, vertical: 60),
-                child: ElevatedButton(
-                  onPressed: _handleGetStarted,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 18, horizontal: 30),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    elevation: 8,
-                    shadowColor: Colors.black.withOpacity(0.3),
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Get Started',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF667EEA),
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward,
-                        size: 20,
-                        color: Color(0xFF667EEA),
-                      ),
-                    ],
-                  ),
-                )
-                    .animate()
-                    .scale(
-                      duration: const Duration(milliseconds: 500),
-                      delay: const Duration(milliseconds: 900),
-                      curve: Curves.elasticOut,
-                    )
-                    .fadeIn(
-                      duration: const Duration(milliseconds: 500),
-                      delay: const Duration(milliseconds: 900),
-                    ),
+                  const SizedBox(height: 40),
+                ],
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class FeatureItem extends StatelessWidget {
-  final String text;
-
-  const FeatureItem({super.key, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12, left: 30),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Color.fromARGB(255, 91, 195, 226),
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xE6FFFFFF),
             ),
           ),
         ],

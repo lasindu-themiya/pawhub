@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:pawhub/screens/splash_screen.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'config/firebase_options.dart';
 import 'utils/notification_helper.dart';
-import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

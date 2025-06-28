@@ -20,7 +20,10 @@ class BottomNavBar extends StatelessWidget {
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.location_on), label: 'GPS'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.location_on),
+          label: 'GPS',
+        ),
         BottomNavigationBarItem(
           icon: Icon(Icons.thermostat),
           label: 'Temperature',
@@ -28,6 +31,10 @@ class BottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(
           icon: Icon(Icons.medical_services),
           label: 'Vaccination',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.history), // <-- Added history tab
+          label: 'History',
         ),
       ],
     );

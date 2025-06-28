@@ -5,6 +5,7 @@ import '../models/geofence_model.dart';
 class FirestoreService {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  // --- Geofence ---
   static Future<void> saveGeofence(Geofence geofence) async {
     await _db.collection('geofence').doc('dogFence').set(geofence.toJson());
   }
@@ -17,6 +18,7 @@ class FirestoreService {
     return null;
   }
 
+  // --- Dog location ---
   static Future<LatLng?> fetchDogLocation() async {
     final doc = await _db.collection('location').doc('dog_location').get();
     if (doc.exists) {
@@ -28,7 +30,7 @@ class FirestoreService {
     return null;
   }
 
-  // --- Stream the current temperature from 'temperature/dogtemp' ---
+  // --- Temperature stream ---
   static Stream<double?> streamCurrentTemperature() {
     return _db
         .collection('temperature')
@@ -43,8 +45,7 @@ class FirestoreService {
         });
   }
 
-  // --- Vaccination methods for a single dog ---
-  // Structure: vaccinations (collection) -> dog (doc) -> records (subcollection)
+  // --- Vaccinations ---
   static Stream<List<Map<String, dynamic>>> streamVaccinations() {
     return _db
         .collection('vaccinations')
@@ -69,7 +70,6 @@ class FirestoreService {
     required DateTime date,
     required int duration,
   }) async {
-    // Calculate next vaccination date
     final nextDate = DateTime(date.year, date.month + duration, date.day);
     await _db
         .collection('vaccinations')
@@ -82,8 +82,6 @@ class FirestoreService {
       'nextDate': Timestamp.fromDate(nextDate),
     });
   }
-
-  // ...existing code...
 
   static Future<void> deleteVaccination(String docId) async {
     await _db
@@ -112,5 +110,54 @@ class FirestoreService {
       'duration': duration,
       'nextDate': Timestamp.fromDate(nextDate),
     });
+  }
+
+  // --- HISTORY ---
+
+  /// Stream all history events, ordered by timestamp descending (most recent first)
+  static Stream<List<HistoryEvent>> streamHistory({String? filterEvent}) {
+    Query query = _db.collection('history').orderBy('timestamp', descending: true);
+    if (filterEvent != null) {
+      query = query.where('event', isEqualTo: filterEvent);
+    }
+    return query.snapshots().map((snapshot) =>
+        snapshot.docs.map((doc) => HistoryEvent.fromFirestore(doc)).toList());
+  }
+}
+
+/// Model for a single history event
+class HistoryEvent {
+  final String id;
+  final String event; // 'entered' or 'left'
+  final DateTime timestamp;
+  final double latitude;
+  final double longitude;
+
+  HistoryEvent({
+    required this.id,
+    required this.event,
+    required this.timestamp,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  factory HistoryEvent.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    // Timestamp field may be string or Timestamp
+    DateTime ts;
+    if (data['timestamp'] is Timestamp) {
+      ts = (data['timestamp'] as Timestamp).toDate();
+    } else if (data['timestamp'] is String) {
+      ts = DateTime.tryParse(data['timestamp']) ?? DateTime.now();
+    } else {
+      ts = DateTime.now();
+    }
+    return HistoryEvent(
+      id: doc.id,
+      event: data['event'] ?? '',
+      timestamp: ts,
+      latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (data['longitude'] as num?)?.toDouble() ?? 0.0,
+    );
   }
 }

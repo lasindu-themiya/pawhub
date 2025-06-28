@@ -3,6 +3,7 @@ import '../widgets/bottom_nav_bar.dart';
 import 'gps_screen.dart';
 import 'temperature_screen.dart';
 import 'vaccination_screen.dart';
+import 'history_screen.dart'; // <-- Import history screen
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const GpsScreen(),
     const TemperatureScreen(),
     const VaccinationScreen(),
+    const HistoryScreen(), // <-- Added history screen
   ];
 
   void _onItemTapped(int index) {
