@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/geofence_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
+import 'package:intl/intl.dart';
 
 class FirestoreService {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
+  static Timer? _geofenceMonitorTimer;
 
   // --- Geofence ---
   static Future<void> saveGeofence(Geofence geofence) async {
@@ -12,7 +16,7 @@ class FirestoreService {
 
   static Future<Geofence?> fetchGeofence() async {
     final doc = await _db.collection('geofence').doc('dogFence').get();
-    if (doc.exists) {
+    if (doc.exists && doc.data() != null) {
       return Geofence.fromJson(doc.data()!);
     }
     return null;
@@ -21,13 +25,63 @@ class FirestoreService {
   // --- Dog location ---
   static Future<LatLng?> fetchDogLocation() async {
     final doc = await _db.collection('location').doc('dog_location').get();
-    if (doc.exists) {
-      final data = doc.data();
-      if (data != null && data['latitude'] != null && data['longitude'] != null) {
-        return LatLng(data['latitude'], data['longitude']);
+    if (doc.exists && doc.data() != null) {
+      final data = doc.data()!;
+      if (data['latitude'] != null && data['longitude'] != null) {
+        return LatLng((data['latitude'] as num).toDouble(), (data['longitude'] as num).toDouble());
       }
     }
     return null;
+  }
+
+  // --- Geofence monitoring ---
+  /// Start monitoring geofence every 10 seconds
+  static void startGeofenceMonitor() {
+    _geofenceMonitorTimer?.cancel();
+    _geofenceMonitorTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      checkAndAddGeofenceHistory();
+    });
+  }
+
+  /// Stop monitoring geofence
+  static void stopGeofenceMonitor() {
+    _geofenceMonitorTimer?.cancel();
+    _geofenceMonitorTimer = null;
+  }
+
+  /// Checks geofence and dog location, adds history if state changed
+  static Future<void> checkAndAddGeofenceHistory() async {
+    final geofence = await fetchGeofence();
+    final location = await fetchDogLocation();
+    if (geofence == null || location == null) return;
+
+    final centerLat = geofence.latitude;
+    final centerLng = geofence.longitude;
+    final radius = geofence.radius; // in meters
+
+    final dist = Distance().as(
+      LengthUnit.Meter,
+      LatLng(centerLat, centerLng),
+      location,
+    );
+    final nowState = dist > radius ? 'outside' : 'inside';
+
+    // Use SharedPreferences to store last state locally
+    final prefs = await SharedPreferences.getInstance();
+    final lastState = prefs.getString('last_geofence_state');
+
+    if (lastState != nowState) {
+      final eventType = nowState == 'outside' ? 'left' : 'entered';
+      final now = DateTime.now();
+      final formattedTimestamp = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
+      await _db.collection('history').add({
+        'event': eventType,
+        'timestamp': formattedTimestamp,
+        'latitude': location.latitude,
+        'longitude': location.longitude,
+      });
+      await prefs.setString('last_geofence_state', nowState);
+    }
   }
 
   // --- Temperature stream ---
@@ -129,7 +183,7 @@ class FirestoreService {
 class HistoryEvent {
   final String id;
   final String event; // 'entered' or 'left'
-  final DateTime timestamp;
+  final String timestamp; // Now a string!
   final double latitude;
   final double longitude;
 
@@ -143,19 +197,10 @@ class HistoryEvent {
 
   factory HistoryEvent.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    // Timestamp field may be string or Timestamp
-    DateTime ts;
-    if (data['timestamp'] is Timestamp) {
-      ts = (data['timestamp'] as Timestamp).toDate();
-    } else if (data['timestamp'] is String) {
-      ts = DateTime.tryParse(data['timestamp']) ?? DateTime.now();
-    } else {
-      ts = DateTime.now();
-    }
     return HistoryEvent(
       id: doc.id,
       event: data['event'] ?? '',
-      timestamp: ts,
+      timestamp: data['timestamp'] ?? '',
       latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (data['longitude'] as num?)?.toDouble() ?? 0.0,
     );

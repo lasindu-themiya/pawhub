@@ -12,6 +12,7 @@ class VaccinationScreen extends StatefulWidget {
 
 class _VaccinationScreenState extends State<VaccinationScreen> {
   final Set<String> _notifiedToday = {};
+  String _lastNotificationDate = '';
 
   @override
   Widget build(BuildContext context) {
@@ -21,23 +22,52 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
         builder: (context, snapshot) {
           final vaccinations = snapshot.data ?? [];
           final now = DateTime.now();
+          final today =
+              '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+          // Reset notifications if it's a new day
+          if (_lastNotificationDate != today) {
+            _notifiedToday.clear();
+            _lastNotificationDate = today;
+          }
 
           // --- Notification logic: notify if within a week of nextDate ---
+          List<Map<String, dynamic>> upcomingVaccinations = [];
+
           for (final v in vaccinations) {
             if (v['nextDate'] != null) {
               final nextDate = (v['nextDate'] as Timestamp).toDate();
-              final days = nextDate.difference(DateTime(now.year, now.month, now.day)).inDays;
+              final days =
+                  nextDate
+                      .difference(DateTime(now.year, now.month, now.day))
+                      .inDays;
               if (days >= 0 && days <= 7) {
-                final key = '${v['type']}_${nextDate.toIso8601String()}';
+                final key = '${v['type']}_${_formatDate(nextDate)}';
                 if (!_notifiedToday.contains(key)) {
-                  _notifiedToday.add(key);
-                  NotificationHelper.showDogOutNotification(
-                    title: 'Vaccination Reminder',
-                    body: 'Your dog needs ${v['type']} vaccination in $days day${days == 1 ? '' : 's'} (${_formatDate(nextDate)})',
-                  );
+                  upcomingVaccinations.add({
+                    'key': key,
+                    'type': v['type'],
+                    'nextDate': nextDate,
+                    'days': days,
+                  });
                 }
               }
             }
+          }
+
+          // Send notifications for all upcoming vaccinations with sequential delays
+          for (int i = 0; i < upcomingVaccinations.length; i++) {
+            final vaccination = upcomingVaccinations[i];
+            _notifiedToday.add(vaccination['key']);
+
+            Future.delayed(Duration(milliseconds: i * 500), () {
+              NotificationHelper.showVaccinationNotification(
+                id: i,
+                title: 'Vaccination Reminder',
+                body:
+                    'Your dog needs ${vaccination['type']} vaccination in ${vaccination['days']} day${vaccination['days'] == 1 ? '' : 's'} (${_formatDate(vaccination['nextDate'])})',
+              );
+            });
           }
 
           return SingleChildScrollView(
@@ -47,7 +77,10 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                 Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color.fromARGB(255, 183, 111, 216), Color.fromARGB(255, 203, 125, 223)],
+                      colors: [
+                        Color.fromARGB(255, 183, 111, 216),
+                        Color.fromARGB(255, 203, 125, 223),
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -116,7 +149,8 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Vaccination Status',
@@ -137,10 +171,19 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                                           const SizedBox(width: 4),
                                           Text(
                                             vaccinations.any((v) {
-                                              final nextDate = (v['nextDate'] as Timestamp).toDate();
-                                              final now = DateTime.now();
-                                              return nextDate.isAfter(now) && nextDate.difference(now).inDays <= 7;
-                                            })
+                                                  final nextDate =
+                                                      (v['nextDate']
+                                                              as Timestamp)
+                                                          .toDate();
+                                                  final now = DateTime.now();
+                                                  return nextDate.isAfter(
+                                                        now,
+                                                      ) &&
+                                                      nextDate
+                                                              .difference(now)
+                                                              .inDays <=
+                                                          7;
+                                                })
                                                 ? 'Upcoming Vaccinations'
                                                 : 'Up to Date',
                                             style: const TextStyle(
@@ -188,20 +231,29 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                             ),
                             padding: const EdgeInsets.all(16),
                             child: Column(
-                              children: vaccinations
-                                  .map((v) => Column(
-                                        children: [
-                                          _buildVaccinationItem(
-                                            id: v['id'],
-                                            type: v['type'],
-                                            date: (v['date'] as Timestamp).toDate(),
-                                            nextDate: (v['nextDate'] as Timestamp).toDate(),
-                                            duration: v['duration'],
-                                          ),
-                                          const Divider(color: Color(0xFFF3F4F6)),
-                                        ],
-                                      ))
-                                  .toList(),
+                              children:
+                                  vaccinations
+                                      .map(
+                                        (v) => Column(
+                                          children: [
+                                            _buildVaccinationItem(
+                                              id: v['id'],
+                                              type: v['type'],
+                                              date:
+                                                  (v['date'] as Timestamp)
+                                                      .toDate(),
+                                              nextDate:
+                                                  (v['nextDate'] as Timestamp)
+                                                      .toDate(),
+                                              duration: v['duration'],
+                                            ),
+                                            const Divider(
+                                              color: Color(0xFFF3F4F6),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                      .toList(),
                             ),
                           ),
                         ],
@@ -213,7 +265,8 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                           children: [
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () => _showAddVaccinationDialog(context),
+                                onPressed:
+                                    () => _showAddVaccinationDialog(context),
                                 style: ElevatedButton.styleFrom(
                                   padding: EdgeInsets.zero,
                                   shape: RoundedRectangleBorder(
@@ -224,11 +277,17 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                      colors: [
+                                        Color(0xFF667EEA),
+                                        Color(0xFF764BA2),
+                                      ],
                                     ),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                    horizontal: 20,
+                                  ),
                                   child: const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -338,10 +397,11 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                 _showDeleteConfirmation(context, id);
               }
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'edit', child: Text('Edit')),
-              const PopupMenuItem(value: 'delete', child: Text('Delete')),
-            ],
+            itemBuilder:
+                (context) => [
+                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                ],
           ),
         ],
       ),
@@ -374,7 +434,9 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                 TextField(
                   controller: _durationController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Duration (months)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Duration (months)',
+                  ),
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
@@ -425,23 +487,26 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
   void _showDeleteConfirmation(BuildContext context, String docId) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Vaccination'),
-        content: const Text('Are you sure you want to delete this vaccination record?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Vaccination'),
+            content: const Text(
+              'Are you sure you want to delete this vaccination record?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await FirestoreService.deleteVaccination(docId);
+                  Navigator.pop(context);
+                },
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () async {
-              await FirestoreService.deleteVaccination(docId);
-              Navigator.pop(context);
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -454,7 +519,9 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
   }) {
     final _typeController = TextEditingController(text: type);
     DateTime _selectedDate = date;
-    final _durationController = TextEditingController(text: duration.toString());
+    final _durationController = TextEditingController(
+      text: duration.toString(),
+    );
 
     showDialog(
       context: context,
@@ -473,7 +540,9 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
                 TextField(
                   controller: _durationController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Duration (months)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Duration (months)',
+                  ),
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(

@@ -1,9 +1,31 @@
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
-import 'package:intl/intl.dart';
+import 'dart:async';
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
+
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  Timer? _monitorTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start monitoring every 10 seconds
+    _monitorTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      FirestoreService.checkAndAddGeofenceHistory();
+    });
+  }
+
+  @override
+  void dispose() {
+    _monitorTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +58,10 @@ class HistoryScreen extends StatelessWidget {
               final e = events[i];
               final isEntered = e.event == 'entered';
               final color = isEntered ? Colors.green[700] : Colors.red[700];
-              final icon = isEntered
-                  ? Icons.login
-                  : Icons.logout;
-              final subtitle = "Lat: ${e.latitude.toStringAsFixed(6)},  Lng: ${e.longitude.toStringAsFixed(6)}";
-              final timeStr = DateFormat("yyyy-MM-dd HH:mm:ss").format(e.timestamp);
+              final icon = isEntered ? Icons.login : Icons.logout;
+              final subtitle =
+                  "Lat: ${e.latitude.toStringAsFixed(6)},  Lng: ${e.longitude.toStringAsFixed(6)}";
+              final timeStr = e.timestamp; // Use the string directly
 
               return Card(
                 elevation: 2,
@@ -55,10 +76,7 @@ class HistoryScreen extends StatelessWidget {
                   ),
                   title: Text(
                     isEntered ? "Dog entered geofence" : "Dog left geofence",
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: color
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: color),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

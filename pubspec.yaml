@@ -42,6 +42,7 @@ dependencies:
   gradient_borders: ^1.0.1
   flutter_local_notifications: ^19.2.1
   firebase_messaging: ^14.7.4
+  shared_preferences: ^2.2.2
   
 dev_dependencies:
   flutter_test:

@@ -96,7 +96,10 @@ class _TemperatureScreenState extends State<TemperatureScreen> {
 
           return Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 60),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 60,
+              ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -205,9 +208,9 @@ class _TemperatureScreenState extends State<TemperatureScreen> {
                       ],
                     ),
                   ).animate().scale(
-                        duration: const Duration(milliseconds: 800),
-                        curve: Curves.elasticOut,
-                      ),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.elasticOut,
+                  ),
                 ],
               ),
             ),

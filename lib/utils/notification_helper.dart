@@ -13,19 +13,49 @@ class NotificationHelper {
   }
 
   // lib/utils/notification_helper.dart
-  static Future<void> showDogOutNotification({String? title, String? body}) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'dog_out_channel',
-      'Dog Out of Geofence',
-      importance: Importance.max,
-      priority: Priority.high,
-      showWhen: true,
+  static Future<void> showDogOutNotification({
+    String? title,
+    String? body,
+  }) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'dog_out_channel',
+          'Dog Out of Geofence',
+          importance: Importance.max,
+          priority: Priority.high,
+          showWhen: true,
+        );
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
     );
-    const NotificationDetails details = NotificationDetails(android: androidDetails);
     await _plugin.show(
       0,
       title ?? 'Dog Alert',
       body ?? '⚠️ Your dog is out of the geofence area!',
+      details,
+    );
+  }
+
+  static Future<void> showVaccinationNotification({
+    required int id,
+    String? title,
+    String? body,
+  }) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'vaccination_channel',
+          'Vaccination Reminders',
+          importance: Importance.max,
+          priority: Priority.high,
+          showWhen: true,
+        );
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+    );
+    await _plugin.show(
+      id,
+      title ?? 'Vaccination Reminder',
+      body ?? 'Your pet has an upcoming vaccination.',
       details,
     );
   }
